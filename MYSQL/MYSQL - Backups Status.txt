@@ -1,0 +1,36 @@
+1.	Esse script mostra o tempo aproximado que irá terminar o backup
+
+set lines 185;
+col OPNAME for a30;
+col pct_done for a10;
+alter session set nls_date_format='DD-MON-YYYY HH24:MI:SS';
+select sl.sid, sl.opname,
+       to_char(100*(sofar/totalwork), '990.9')||'%' pct_done,
+       sysdate+(TIME_REMAINING/60/60/24) done_by
+  from v$session_longops sl, v$session s
+where sl.sid = s.sid
+   and sl.serial# = s.serial#
+   and sl.sid in (select sid from v$session where module like 'backup%' or module like 'restore%' or module like 'rman%')
+   and sofar != totalwork
+        and totalwork > 0
+/
+
+
+2.	Esse script traz todos os backups archive/full que foram executados ou que estão sendo executados
+
+set pages 200
+set lines 200
+col START_TIME for a20
+col END_TIME for a20
+col OUTPUT_BYTES_DISPLAY for a15
+col TIME_TAKEN_DISPLAY for a20
+select session_key,
+        SESSION_RECID,
+       input_type,
+       status,
+       to_char(start_time,'DD-MON-YYYY HH24:MI:SS') start_time,
+       to_char(end_time,'DD-MON-YYYY HH24:MI:SS')   end_time,
+       output_bytes_display,
+       time_taken_display
+from v$rman_backup_job_details where start_time > sysdate -1
+order by session_key asc;

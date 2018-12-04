@@ -1,0 +1,174 @@
+ORACLE - Verifica Locks
+
+=====================================VERIFICA LOCKS NA BASE================================================
+
+SET LINES 200;
+SET PAGES 999;
+WITH LOCK_HOLDERS AS (
+	SELECT	W.SESSION_ID		AS WAITING_SESSION,
+			H.SESSION_ID 		AS HOLDING_SESSION,
+			W.LOCK_TYPE			AS LOCK_TYPE,
+			H.MODE_HELD			AS MODE_HELD,
+			W.MODE_REQUESTED	AS MODE_REQUESTED,
+			W.LOCK_ID1			AS LOCK_ID1,
+			W.LOCK_ID2			AS LOCK_ID2
+	FROM 	DBA_LOCKS W, 
+			DBA_LOCKS H
+	WHERE 	H.BLOCKING_OTHERS =  'Blocking'
+	AND  	H.MODE_HELD      !=  'None'
+	AND  	H.MODE_HELD      !=  'Null'
+	AND  	W.MODE_REQUESTED !=  'None'
+	AND  	W.LOCK_TYPE       =  H.LOCK_TYPE
+	AND  	W.LOCK_ID1        =  H.LOCK_ID1
+	AND  	W.LOCK_ID2        =  H.LOCK_ID2	
+),
+LOCK_HOLDERS_B AS (
+	SELECT	WAITING_SESSION,
+			HOLDING_SESSION,
+            LOCK_TYPE,
+            MODE_HELD,
+            MODE_REQUESTED,
+            LOCK_ID1,
+            LOCK_ID2
+	FROM	LOCK_HOLDERS
+	UNION ALL
+	(SELECT HOLDING_SESSION, 
+			NULL, 
+			'None', 
+			NULL, 
+			NULL, 
+			NULL, 
+			NULL
+	FROM 	LOCK_HOLDERS
+	MINUS
+	SELECT 	WAITING_SESSION, 
+			NULL, 
+			'None', 
+			NULL, 
+			NULL, 
+			NULL, 
+			NULL
+    FROM 	LOCK_HOLDERS)
+),
+LOCK_HOLDERS_C AS (
+	SELECT  RPAD('.', 	CASE	
+							WHEN (LEVEL = 1) THEN
+								0
+							ELSE
+								LEVEL - 1
+						END * 5, '.') AS NIVEL,
+			LEVEL AS NIVEL_N,
+			WAITING_SESSION,
+			LOCK_TYPE,
+			MODE_REQUESTED,
+			MODE_HELD,
+			LOCK_ID1,
+			LOCK_ID2,
+			ROWNUM AS ROWNUM_H
+	FROM 	LOCK_HOLDERS_B
+	CONNECT BY  PRIOR 	WAITING_SESSION	=	HOLDING_SESSION
+	START 	WITH 		HOLDING_SESSION IS 	NULL
+),
+FINAL_LOCKS AS (
+	SELECT  LH.ROWNUM_H,
+			NVL(LH.NIVEL, '.') 						||
+			NVL('MODULE: ' || S.MODULE, '') 						|| ' | ' ||
+			NVL('CLIENT_IDENTIFIER: ' || S.CLIENT_IDENTIFIER, '')			|| ' | ' ||
+			NVL('SID: ' || S.SID, '') 							|| ' | ' ||
+			NVL('SERIAL#: ' || S.SERIAL#, '')						|| ' | ' || 
+			NVL('USERNAME: ' || S.USERNAME, '')						|| ' | ' ||
+			NVL('STATUS: ' || S.STATUS, '')						|| ' | ' ||
+			NVL('OSUSER: ' || S.OSUSER, '')						|| ' | ' ||
+			NVL('MACHINE: ' || S.MACHINE, '')						|| ' | ' ||
+			NVL('PROGRAM: ' || S.PROGRAM, '')						|| ' | ' ||
+			NVL('ACTION: ' || S.ACTION, '')						|| ' | ' ||
+			NVL('CLIENT_INFO: ' || S.CLIENT_INFO, '')					|| ' | ' ||
+			NVL('LAST_CALL_ET: ' || S.LAST_CALL_ET, '')					|| ' | ' ||
+			NVL('WAIT_CLASS: ' || S.WAIT_CLASS, '')					|| ' | ' ||
+			NVL('SQL_ID: ' || NVL(S.SQL_ID, S.PREV_SQL_ID), '')	|| ' | ' ||
+			NVL('LOCK_TYPE: ' || LH.LOCK_TYPE, '')					|| ' | ' ||
+			NVL('MODE_HELD: ' || LH.MODE_HELD, '')					|| ' | ' ||
+			NVL('MODE_REQUESTED: ' || LH.MODE_REQUESTED, '')				|| ' | ' ||
+			CASE	
+					WHEN (NIVEL_N = 1) THEN
+						'ALTER SYSTEM KILL SESSION ''' 	|| TO_CHAR(S.SID) || ',' || TO_CHAR(S.SERIAL#) || ''' IMMEDIATE;'
+					ELSE
+						''
+			END ||
+			CHR(13) || CHR(10) AS LOCK_STRING
+	FROM		V$SESSION		S
+	INNER JOIN 	LOCK_HOLDERS_C	LH
+	ON			LH.WAITING_SESSION	=	S.SID
+)
+SELECT	LOCK_STRING
+FROM 	FINAL_LOCKS
+ORDER BY ROWNUM_H;
+
+
+
+=====================================VERIFICA SQLID DA SESSÃO==============================================
+
+
+COL SQL_FULLTEXT FORM a150;
+SET LONG 30000;
+SET LINES 200;
+SET PAGES 9999;
+SELECT 	SQL_FULLTEXT
+FROM	
+(
+	SELECT	SQL_FULLTEXT 
+	FROM 	V$SQL 
+	WHERE 	SQL_ID = '&SQL_ID'
+)
+WHERE	ROWNUM <= 1;
+
+=====================================VERIFICA SID DA SESSÃO==============================================
+
+set pages 200 lines 200
+col origem format a50
+col username   format a15     heading "Username"
+col osuser     format a25     heading "OS User"
+col machine    format a35     heading "Machine"
+col lcall_et_m format 9999.99 heading "ET Min"  
+
+select b.usuario,b.programa,a.audsid,a.sid,serial#,username,status from gv$session a,logix.log_dados_sessao_logix b
+where a.audsid=b.sid
+and type<>'BACKGROUND'
+order by 1;
+
+
+=====================================ECERRA A SESSÃO=======================================================
+
+ALTER SYSTEM KILL SESSION ',' IMMEDIATE;
+
+
+
+
+
+
+verifica lock dimas
+
+   set linesize 150
+    set pagesize 150
+    set tab      off
+    col hold_wait  format a30     heading "Holder/Waiter"
+    col username   format a15     heading "Username"
+    col osuser     format a15     heading "OS User"
+    col machine    format a25     heading "Machine"
+    col lcall_et_m format 9999.99 heading "ET Min"
+    col module     format a15     heading "Module"
+    col action     format a25     heading "Action"
+    select decode
+          (a.request,0,'Holder: ','  Waiter: ') || '[' ||
+           a.inst_id || '] (' || a.sid || ',' || b.serial# || ')' hold_wait,
+           b.username, b.osuser, b.machine, b.status, trunc(b.last_call_et/60,2) lcall_et_m,
+           b.module, 
+           --b.action,
+           b.sql_id
+    from gv$lock a, gv$session b, sys.obj$ c, sys.obj$ d
+    where (id1, id2, a.type) in (select id1, id2, type from gv$lock where request > 0)
+      and a.inst_id = b.inst_id
+      and a.sid     = b.sid
+      and a.id1     = c.obj# (+)
+      and a.id2     = d.obj# (+)
+    order by id1, request;

@@ -1,0 +1,104 @@
+ORACLE - Tablespace UNDO Full
+
+Executar a consulta abaixo:
+
+SET LINES 220;
+SET PAGES 999;
+select 	dba_seg.size_mb,
+		dba_seg.PERC,
+		s.sid,
+		s.serial#,
+		NVL(s.SQL_ID, s.PREV_SQL_ID) AS SQL_ID,
+		s.last_call_et,
+		s.OSUSER,
+		s.PROGRAM,
+		s.MACHINE,
+		s.USERNAME
+FROM 	v$lock l, 
+		v$process p, 
+		v$rollname r, 
+		v$session s, 
+		(
+			SELECT	segment_name, 
+					ROUND(bytes/(1024*1024),2) size_mb,
+					CAST(100/TABLESPACES.MBYTES*ROUND(bytes/(1024*1024),2) AS NUMERIC(10,2)) AS PERC
+			FROM 	dba_segments,
+					(
+						SELECT		TS.TABLESPACE_NAME,
+									ROUND(SUM(DF.BYTES)/1024.0/1024.0, 2) AS MBYTES
+						FROM		DBA_DATA_FILES DF
+						INNER JOIN	DBA_TABLESPACES TS
+						ON			DF.TABLESPACE_NAME	=	TS.TABLESPACE_NAME
+						WHERE		TS.CONTENTS			=	'UNDO'
+						GROUP BY 	TS.TABLESPACE_NAME
+					) TABLESPACES
+			WHERE 	segment_type				=	'TYPE2 UNDO'
+			AND		TABLESPACES.TABLESPACE_NAME	=	dba_segments.TABLESPACE_NAME
+			ORDER BY bytes DESC
+		) dba_seg 
+WHERE 	l.SID		=	p.pid(+) 
+AND 	s.SID 		= 	l.SID 
+AND 	TRUNC(l.id1(+) / 65536)	=	r.usn 
+AND 	l.TYPE(+)	= 	'TX' 
+AND 	l.lmode(+) 	= 	6 
+AND 	r.NAME 		= 	dba_seg.segment_name
+ORDER BY size_mb DESC;
+
+
+Verificar as sessões que possuem o maior PERC, que é o percentual de uso em relação ao tamanho total da tablespace de UNDO.
+
+Salvar este resultado no chamado, como texto (formatar courier new) e como imagem.
+============================================================================================================================
+
+Destas sessões, obter o texto do SQL que está em execução. Para isso deve ser executada a consulta abaixo:
+Executar a consulta e ela solicitará o SQL_ID.
+
+
+
+COL SQL_FULLTEXT FORM a150;
+SET LONG 30000;
+SET LINES 200;
+SET PAGES 9999;
+SELECT 	SQL_FULLTEXT
+FROM	
+(
+	SELECT	SQL_FULLTEXT 
+	FROM 	V$SQL 
+	WHERE 	SQL_ID = '&SQL_ID'
+)
+WHERE	ROWNUM <= 1;
+
+
+
+Adicionar cada consulta ao chamado juntamente com o SID da sessão.
+
+Estas consultas que necessitaram de todo este UNDO devem ser posteriormente analisadas.
+
+
+Se o espaço da UNDO estiver chegando a 100% deverá ser adicionado mais espaço na tablespace de UNDO.
+
+
+Entrar em contato com o cliente, respeitando as regras de acionamento e informar que uma sessão do banco de dados está gerando consumo de UNDO. Passar as informações da sessão.
+
+
+Solicitar se a sessão pode ser derrubada ou se é necessário aumentar a tablespace de UNDO.
+
+
+Passar as informações obtidas através das consultas ao cliente por e-mail.
+
+
+alter database datafile '+DATA/ORABCX01/DATAFILE/undotbs4.439.986031975' resize 25g;
+
+ALTER SYSTEM KILL SESSION '5214,2800' IMMEDIATE;
+
+
+
+==================================================================================================
+-para acompanhar Recover 
+
+SELECT usn, state, undoblockstotal "Total", undoblocksdone "Done",
+undoblockstotal-undoblocksdone "ToDo",
+DECODE(cputime,0,'unknown',SYSDATE+(((undoblockstotal-undoblocksdone) / (undoblocksdone / cputime)) / 86400))
+"Finish at"
+FROM v$fast_start_transactions
+where state='RECOVERING';

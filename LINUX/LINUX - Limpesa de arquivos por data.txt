@@ -1,0 +1,22 @@
+pasta traces
+
+find . -name "*.trc" -mtime +7 -exec rm -rf {} \;
+find . -name "*.trm" -mtime +7 -exec rm -rf {} \;
+
+pasta adump (somente 7 dias sempre, somente pastas adump e adit pode ser executado este comando)
+
+find . -name "*.aud" -mtime +7 -exec rm -rf {} \; 
+
+
+Por minuto.
+
+find . -name "*.trc*" -mmin +5 -exec rm -rf {}  \; 
+find . -name "*.trm*" -mmin +5 -exec rm -rf {}  \; 
+
+
+consultar numero de arquivos na pasta
+
+ls -la|grep -e "^-"|wc -l
+
+
+

@@ -1,0 +1,74 @@
+ORACLE - alerta Low Free Number Of Opened Cursor
+
+> Rodar script 1 - Quantidade de cursores abertos por OWNER (usuário do banco)
+
+set lines 200;
+set pages 999;
+select sum(a.value) total_cur, avg(a.value) avg_cur, max(a.value) max_cur,
+s.username, s.machine
+from v$sesstat a, v$statname b, v$session s
+where a.statistic# = b.statistic#  and s.sid=a.sid
+and b.name = 'opened cursors current'
+group by s.username, s.machine
+order by 1 desc;
+
+> Rodar script 2 - Quantidade atual e a máxima de cursores permitida
+
+set lines 200;
+set pages 999;
+select	max(a.value) as highest_open_cur, 
+		CAST(p.value AS INTEGER) as max_open_cur
+from 	v$sesstat a, 
+		v$statname b, 
+		v$parameter p
+where 	a.statistic#	=	b.statistic# 
+and 	b.name 			= 	'opened cursors current'
+and 	p.name			= 	'open_cursors'
+group by p.value;
+
+
+> Rodar script 3 - Sessões com maior consumo de cursor , informando o SID e SERIAL da sessão para consulta no banco
+
+SET LINES 200;
+SET PAGES 999;
+COL VALUE FOR 999999;
+SELECT	S.SID, 
+		S.SERIAL#,
+		S.USERNAME, 
+		A.VALUE
+FROM 	V$SESSTAT A, 
+		V$STATNAME B, 
+		V$SESSION S 
+WHERE 	A.STATISTIC# 	= 	B.STATISTIC# 
+AND 	S.SID			=	A.SID 
+AND 	B.NAME 			= 	'opened cursors current' 
+AND 	S.USERNAME 		IS NOT NULL
+ORDER BY	A.VALUE DESC;
+
+
+
+> Na primeira consulta deve ser identificado na coluna MAX_CUR a quantidade atual de cursores abertos por aquele owner e a média em que ele 
+> deve executar. Caso o valor MAX_CUR esteja muito acima do valor da coluna AVG_CUR pode significar que há algum processo no momento 
+> consumindo os cursores acima do esperado.
+
+> Na segunda consulta, é mostrado a quantidade atual e a máxima de cursores permitidas no banco, usar este valor como referência para definir 
+> se o valor está próximo do limite.
+
+> Na terceira consulta, deve ser coletados as sessões com maior quantidade de cursores e validar o que cada uma destas sessões está executando.
+
+> usar o comando sh ss.sh versid <sid> ou !sh ss.sh versid <sid> se estiver dentro do sqlplus
+
+EX: sh ss.sh versid 1234 ou !sh ss.sh versid 1234
+
+para ver o que a sessão está executando:
+
+select sid, sql_id
+from v$session s, v$process p
+where s.paddr = p.addr
+and p.spid = 7598; 
+
+Obs: trovar o valor no p.spid = 7598 para o valor informado nas consultas anteriores 
+
+apos executar !sh ss.sh versql <sid> ou sh ss.sh versql <sid> para fora do sqlplus.
+
+coletar as informações e encaminhar ao cliente ou telefonar.

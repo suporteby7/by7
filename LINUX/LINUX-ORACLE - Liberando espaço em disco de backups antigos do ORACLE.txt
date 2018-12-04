@@ -1,0 +1,24 @@
+LINUX/ORACLE - Liberando espaço em disco de backups antigos do oracle. 
+
+acessar com o user do oracle no servidor.
+
+
+acessar o rman
+> rman target /
+
+Executar limpeza de backups antigos 
+>crosscheck backup;
+>crosscheck archivelog all;
+>delete obsolete;
+
+
+Quando foi a situação de RECO na castrolanda no ambiente DEV 
+executar no Rman 
+
+>delete archivelog until time 'sysdate-1';
+
+
+Agemed - AGZONEDB02
+
+RMAN> catalog start with '/backup_dev/PROD_A/'; 
+

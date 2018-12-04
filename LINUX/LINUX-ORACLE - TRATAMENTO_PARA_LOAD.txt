@@ -1,0 +1,27 @@
+//Verificar sessões travadas no ebs
+
+//Verificar se a sessão esta com muito tempo na coluna "TIME", conforme exemplo:
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
+22110 applmgr   25   0 80984  57m 9928 R   78  0.2 325225:55 f60webmx webfile=5,4960,dcrs0059_9001_PRD
+ 5811 applmgr   25   0 49992  29m 7964 R   78  0.1  11121:50 f60webmx webfile=5,19109,dcrs0059_9001_PRD
+26250 applmgr   25   0 60100  37m 8792 R   77  0.1  83:22.19 f60webmx webfile=5,20696,dcrs0059_9001_PRD
+  692 applmgr   25   0 56676  34m 8816 R   58  0.1   2745:59 f60webmx webfile=5,20303,dcrs0059_9001_PRD
+
+
+//DAR UM TOP -C para pegar o pid da sessão e executar este comando:
+select sid, serial#, username, module, machine, PROCESS from gv$session where PROCESS='&proc';
+
+//Verificar se o processo realmente existe no banco
+OBS: Se for uma maquina de não tem banco será necessario logar em uma maquina que tem banco para verificar.
+
+//Pode-se verificar a data da sessão pelo comando abaixo:
+
+ps xau | grep (PID)
+
+//Se for uma sessão travada tratar com cliente ou verificar com a equipe de banco.
+
+
+//Verificar o consumo na maquina:
+
+vmstat 2 1000

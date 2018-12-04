@@ -1,0 +1,12 @@
+ORACLE - Verificar ENTERPRISE MANAGER
+
+---Acessar com o usuário do banco
+
+-Verificar status EM
+emctl status dbconsole
+
+-Parar EM
+emctl stop dbconsole
+
+-Iniciar EM
+emctl start dbconsole 

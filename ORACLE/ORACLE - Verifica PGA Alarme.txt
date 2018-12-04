@@ -1,0 +1,57 @@
+ORACLE - Verifica PGA Alarme.txt
+
+Acessar o servidor, conectar no ORACLE e executar os procedimentos descritos.
+Executar o comando abaixo para saber os parâmetros de memória do banco
+
+SHOW PARAMETER memory_max_target;
+SHOW PARAMETER memory_target;
+SHOW PARAMETER sga_max_size;
+SHOW PARAMETER sga_target;
+SHOW PARAMETER pga;
+
+Execute a consulta abaixo para verificar os processos com maior consumo de PGA
+
+SET LINES 200;
+SET PAGES 9999;
+COL OSUSER FORM a15;
+COL USERNAME FORM a20;
+COL PROGRAM FORM a30;
+COL SID_SERIAL FORM a15;
+-- spool sessoes.log (caso queria salvar em arquivo)
+SELECT	*
+FROM	(
+			SELECT 	S.INST_ID,
+					TO_CHAR(S.SID) || ',' || TO_CHAR(S.SERIAL#) AS SID_SERIAL,
+					S.STATUS,
+					S.USERNAME,
+					S.OSUSER,
+					S.PROGRAM,
+					CAST(S.LAST_CALL_ET/60/60 AS NUMERIC(18,2)) AS HORAS,
+					NVL(SQL_ID, PREV_SQL_ID) AS SQL_ID,
+					P.PGA_ALLOC_MEM/1024/1024 AS PGA_ALLOC_MEM,
+					P.PGA_USED_MEM/1024/1024 AS PGA_USED_MEM,
+					P.PGA_MAX_MEM/1024/1024 AS PGA_MAX_MEM
+			FROM 	GV$PROCESS P, 
+					GV$SESSION S
+			WHERE 	S.PADDR(+)		=	P.ADDR
+			AND		S.INST_ID(+)	=	P.INST_ID
+			AND		S.TYPE			<>	'BACKGROUND'
+			ORDER BY	P.PGA_ALLOC_MEM DESC
+		);
+
+
+A coluna PGA_ALLOC_MEM irá indicar a quantidade de PGA alocada para aquele processo, neste caso, se o consumo for muito alto por uma série de processos, deverá ser validado com o cliente se é alguma rotina sendo executada e se deve ser mantido ou se podemos finalizar a sessão.
+OBS: para saber o que o processo está executando no banco, usar a consulta @v_sqlid e inserir o SQL_ID da sessão .
+
+Se o cliente informar que processo deve ser mantido e a PGA estar próxima do limite, necessário avaliar  junto a N2 de banco se é possível aumentar a memória. Caso contrário, se for solicitado para eliminar o processo, executar o comando alter system kill session ‘SID,SERIAL’ immediate; para a sessão impactante.
+
+
+2 - acompanhamento com N2
+
+Execute a consulta abaixo para saber até que ponto a alteração de PGA pode gerar mudança na instância
+
+
+set lines 155
+set pagesize 1000
+SELECT PGA_TARGET_FACTOR, PGA_TARGET_FOR_ESTIMATE, ESTD_PGA_CACHE_HIT_PERCENTAGE, ESTD_EXTRA_BYTES_RW, ESTD_OVERALLOC_COUNT FROM V$PGA_TARGET_ADVICE ORDER BY 1;
+

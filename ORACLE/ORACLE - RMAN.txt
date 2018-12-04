@@ -1,0 +1,19 @@
+ORACLE - RMAN
+
+----Acessar rman ----
+rman target /
+
+---Verificar retenção dos backups ----
+show all;
+
+------Checar pessas de backup -----
+crosscheck backup;
+
+------Efetuar limpeza dos backups obsoletos----
+delete obsolete; 
+
+
+Agemed - 
+
+RMAN> catalog start with '/backup_dev/PROD_A/'; 
+

@@ -1,0 +1,12 @@
+Acesso Bancos com mesmo user
+
+ -  acessar com o user: su - (user)
+ - seleciona a base: export ORACLE_SID=(base)
+ - verifica qual base selecionada: echo $ORACLE_SID
+
+
+-GRPCOM  
+acessar a base correta : su - oracle e depois source showora.sh
+
+
+Espaço em disco BY7 - Em atendimento no chamado 125367

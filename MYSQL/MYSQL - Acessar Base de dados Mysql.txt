@@ -1,0 +1,43 @@
+MYSQL - Acessar Base de dados Mysql
+
+executar > mysql -u root -p
+
+após executar > show processlist;
+
+
+se listar os processos conforme abaixo o banco está acessivel 
+
++----------+------------------+---------------------+---------------+---------+--------+-----------------------------+------------------+
+| Id       | User             | Host                | db            | Command | Time   | State                       | Info             |
++----------+------------------+---------------------+---------------+---------+--------+-----------------------------+------------------+
+|        1 | event_scheduler  | localhost           | NULL          | Daemon  | 108385 | Waiting for next activation | NULL             |
+|      625 | limiteduser      | 172.31.21.97:46984  | mysql         | Sleep   |      3 |                             | NULL             |
+|     1805 | servicoguiaunder | 189.113.8.210:37037 | thweb_mob     | Sleep   |     59 |                             | NULL             |
+| 18561785 | zabbix           | 127.0.0.1:34446     | mysql         | Sleep   |     42 |                             | NULL             |
+| 46431229 | importador       | 172.31.26.182:42716 | thweb_mob     | Sleep   |     25 |                             | NULL             |
+| 49650870 | disp_mensageria  | 172.31.26.182:47330 | thweb_mob     | Sleep   |     25 |                             | NULL             |
+| 50019290 | importador       | 172.31.26.182:49730 | thweb_mob     | Sleep   |     25 |                             | NULL             |
+| 50141172 | disp_mensageria  | 172.31.26.182:51050 | thweb_mob     | Sleep   |      4 |                             | NULL             |
+| 50198512 | servicoguiaunder | 189.113.8.210:44309 | thweb_mob     | Sleep   |     59 |                             | NULL             |
+| 50198516 | servicoguiaunder | 189.113.8.210:44310 | thweb_mob     | Sleep   |     59 |                             | NULL             |
+| 50198521 | servicoguiaunder | 189.113.8.210:44311 | thweb_mob     | Sleep   |     59 |                             | NULL             |
+| 50198523 | servicoguiaunder | 189.113.8.210:44312 | thweb_mob     | Sleep   |     59 |                             | NULL             |
+| 50198525 | servicoguiaunder | 189.113.8.210:44313 | thweb_mob     | Sleep   |     59 |                             | NULL             |
+| 50198529 | servicoguiaunder | 189.113.8.210:44314 | thweb_mob     | Sleep   |     59 |                             | NULL             |
+| 50202093 | limiteduser      | 172.31.21.97:51276  | mysql         | Sleep   |     10 |                             | NULL             |
+| 50204568 | mensageria       | 172.31.26.44:40116  | thweb_mob     | Sleep   |     49 |                             | NULL             |
+| 50204902 | servicoguiaunder | 189.113.8.210:44349 | thweb_mob     | Sleep   |     58 |                             | NULL             |
+| 50205168 | root             | localhost           | NULL          | Query   |      0 | starting                    | show processlist |
+| 50206277 | ordem_servico    | 189.113.8.210:44356 | ordem_servico | Sleep   |      3 |                             | NULL             |
+| 50206281 | ordem_servico    | 189.113.8.210:44357 | ordem_servico | Sleep   |      3 |                             | NULL             |
+| 50206284 | ordem_servico    | 189.113.8.210:44358 | ordem_servico | Sleep   |      3 |                             | NULL             |
+| 50206286 | ordem_servico    | 189.113.8.210:44359 | ordem_servico | Sleep   |      3 |                             | NULL             |
+| 50206291 | ordem_servico    | 189.113.8.210:44360 | ordem_servico | Sleep   |      3 |                             | NULL             |
+| 50206292 | ordem_servico    | 189.113.8.210:44361 | ordem_servico | Sleep   |      3 |                             | NULL             |
+| 50206296 | ordem_servico    | 189.113.8.210:44362 | ordem_servico | Sleep   |      3 |                             | NULL             |
+| 50206298 | ordem_servico    | 189.113.8.210:44363 | ordem_servico | Sleep   |      3 |                             | NULL             |
+| 50206338 | servicos_php     | 172.31.8.203:39254  | thweb_mob     | Sleep   |      1 |                             | NULL             |
+| 50206345 | servicos_php     | 172.31.28.99:35582  | thweb_mob     | Sleep   |      1 |                             | NULL             |
+| 50206361 | servicos_php     | 172.31.8.203:39272  | thweb_mob     | Sleep   |      0 |                             | NULL             |
++----------+------------------+---------------------+---------------+---------+--------+-----------------------------+------------------+
+

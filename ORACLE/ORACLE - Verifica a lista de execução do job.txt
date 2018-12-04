@@ -1,0 +1,17 @@
+ORACLE - Verifica a lista de execução do job.
+
+
+set pages 200 lines 200
+col RUN_DURATION for a30
+col STATUS for a10
+col JOB_NAME format a30
+select log_date
+, job_name
+, status
+--, req_start_date
+--, actual_start_date
+, run_duration
+--,ADDITIONAL_INFO
+from dba_scheduler_job_run_details
+where job_name = 'JOB_CARTAO_98001'
+order by 1; 

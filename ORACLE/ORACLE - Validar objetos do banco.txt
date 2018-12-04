@@ -1,0 +1,17 @@
+
+validar quais objetos estão invalidos no banco 
+
+col OBJECT_NAME for a30
+select object_name,count(*) from dba_objects where status ='INVALID' group by object_name; 
+=================================================================================================================
+
+Verifica objetos invalidos com o nome do owner
+select owner, object_name from dba_objects where status ='INVALID'; 
+
+=================================================================================================================
+
+Reconpila os objetos inválidos no banco
+@?/rdbms/admin/utlrp.sql
+
+==================================================================================================================
+

@@ -1,0 +1,28 @@
+=======Verificar listener do banco======= 
+
+lsnrctl status 
+
+=======Parar listener do banco=======
+
+lsnrctl stop
+
+=======Iniciar listener do banco=======
+
+lsnrctl start
+
+=======Reiniciar listener do banco=======
+
+lsnrctl restart
+
+
+=======Verificar nome de listener=====
+
+acessar cd $ORACLE_HOME/network/admin 
+verificar no arquivo cat listener.ora
+
+=======Ver se base esta acessivel=====
+SELECT INSTANCE_NAME, STATUS, TO_CHAR(STARTUP_TIME,'DD-MM-YYYY HH24:MI:SS')STARTUP_TIME FROM V$INSTANCE;
+
+
+se a base estar como MOUNTED para mudar o status para open executar:
+alter database open;

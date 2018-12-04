@@ -1,0 +1,33 @@
+acessar o server linux
+
+executar ps -ef | grep dbforbix
+=======caso esteja off========
+o servidor irá responder root      3654  3627  0 12:03 pts/0    00:00:00 grep --color=auto dbforbix
+apenas um processo e não varios.
+=======caso esteja on=========
+o servidor respode diversos processos
+root      3674     1  9 12:04 pts/0    00:00:00 /opt/seven/jdk/bin/java -Duser.language=en -Duser.country=US -Dlog4j.configuration=./conf/log4j.properties -cp lib/commons-codec-1.4.jar:lib/commons-daemon-1.0.5.jar:lib/commons-dbcp-1.4.jar:lib/commons-lang-2.5.jar:lib/commons-logging-1.1.1.jar:lib/commons-pool-1.5.4.jar:lib/jtds-1.2.5.jar:lib/log4j-1.2.15.jar:lib/mysql-connector-java-5.1.14-bin.jar:lib/postgresql-9.0-801.jdbc4.jar:.:./dbforbix-0.6.1.jar com.smartmarmot.dbforbix.bootstrap start ./conf/config.props
+root      3691  3627  0 12:04 pts/0    00:00:00 grep --color=auto dbforbix
+
+reiniciar o processo 
+acessar cd /opt/seven/dbforbix/
+executar o sh run.sh
+
+
+mesmos procedimentos para o zabbix caso esteja ofline
+
+executar ps -ef | grep zabbix
+=======caso esteja off========
+o servidor irá responder apenas um processo e não varios.
+
+=======caso esteja on=========
+o servidor respode diversos processos
+zabbix    1180     1  0 11:16 ?        00:00:00 /usr/local/sbin/zabbix_agentd
+zabbix    1235  1180  0 11:16 ?        00:00:00 /usr/local/sbin/zabbix_agentd: collector [idle 1 sec]
+zabbix    1237  1180  0 11:16 ?        00:00:00 /usr/local/sbin/zabbix_agentd: listener #1 [waiting for connection]
+zabbix    1239  1180  0 11:16 ?        00:00:00 /usr/local/sbin/zabbix_agentd: listener #2 [waiting for connection]
+zabbix    1240  1180  0 11:16 ?        00:00:00 /usr/local/sbin/zabbix_agentd: listener #3 [waiting for connection]
+zabbix    1241  1180  0 11:16 ?        00:00:00 /usr/local/sbin/zabbix_agentd: active checks #1 [idle 1 sec]
+root      3656  3627  0 12:03 pts/0    00:00:00 grep --color=auto zabbix
+
+

@@ -1,0 +1,84 @@
+User Locket Oracle
+
+
+Verificar a evidência do monitoramento para saber qual foi o usuário que foi bloqueado.
+
+
+
+Executar a consulta abaixo no banco de dados:
+
+select USERNAME,ACCOUNT_STATUS,PROFILE FROM DBA_USERS WHERE USERNAME = '&USUARIO'; 
+
+select USERNAME,ACCOUNT_STATUS,PROFILE FROM DBA_USERS WHERE ACCOUNT_STATUS = 'EXPIRED(GRACE)';
+
+Será solicitado o USUARIO, informar conforme a evidência coletada.
+
+Coletar o resultado e adicionar ao chamado.
+
+
+
+Tratativas
+
+ACCOUNT_STATUS = EXPIRED(GRACE)
+Verifique a senha atual do usuário.
+
+
+
+SELECT PASSWORD FROM SYS.USER$ WHERE NAME = '&USUARIO';
+
+Será solicitado o USUARIO, informar conforme a evidência coletada.
+
+Para alterar a senha do usuário execute o comando:
+
+ALTER USER &USUARIO IDENTIFIED BY VALUES '&SENHA';
+
+Será solicitado o USUARIO e SENHA. Pegue os mesmos dos comandos anteriores.
+
+Após a alteração da senha desbloqueie o usuário:
+
+ALTER USER &USUARIO ACCOUNT UNLOCK;
+
+Será solicitado o USUARIO, informar conforme a evidência coletada.
+
+Verifique com o cliente se o PROFILE do usuário pode ser alterado para não expirar a senha. Caso positivo, execute abaixo.
+
+Ajustar Profile Para Não Bloquear Senha de Usuário
+
+Verifique como está o parâmetro atual do profile. Execute o comando abaixo:
+
+set pages 999;
+SET LINES 200;
+SELECT PROFILE, RESOURCE_NAME, LIMIT  FROM dba_profiles WHERE RESOURCE_NAME = 'PASSWORD_LIFE_TIME';
+
+Compare com o Profile obtido do usuário. Se o LIMIT estiver diferente de UNLIMITED execute o comando abaixo para realizar o ajuste:
+
+ALTER PROFILE &PROFILE LIMIT PASSWORD_LIFE_TIME UNLIMITED;
+
+Informe o nome do profile do usuário.
+
+
+
+      2 . ACCOUNT_STATUS = LOCKED(TIMED)
+
+O usuário foi bloqueado por tentativas de Logon erradas.
+
+Verificar com o cliente se a aplicação está configurada com a senha correta.
+
+Solicite ao cliente para desbloquear o usuário. Se permitido, execute o comando:
+
+ALTER USER &USUARIO ACCOUNT UNLOCK;
+
+Será solicitado o USUARIO, informar conforme a evidência coletada.
+
+
+
+
+      3 . ACCOUNT_STATUS = OUTROS
+
+Solicite ao cliente para desbloquear o usuário. Se permitido, execute o comando:
+
+ALTER USER &USUARIO ACCOUNT UNLOCK;
+
+Será solicitado o USUARIO, informar conforme a evidência coletada.
+
+

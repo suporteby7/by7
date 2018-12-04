@@ -1,0 +1,7 @@
+Recycle Bin Oracle
+
+====consultar Recyclebin=====
+select count(*) from dba_recyclebin;
+
+=====para liberar===== 
+purge dba_recyclebin;

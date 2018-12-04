@@ -1,0 +1,6 @@
+Procedimento reiniciar Zabiix em proxy
+
+
+acessar  cd /etc/init.d
+listar ls
+executar service zabbix_proxy_by7 restart

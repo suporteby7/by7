@@ -1,0 +1,147 @@
+TABLESPACE FULL
+
+Deve-se entrar no banco SQL para executar os scripts de verificação de tabela:
+
+-->Lista tabelas existentes no banco
+
+set pages 999
+set lines 999
+COL tbs FORMAT a25
+COL total(mb) FORMAT 999999,990.00
+COL livre(mb) FORMAT 999999,990.00
+COL livre(%) FORMAT 990.00
+SELECT DISTINCT d.tablespace_name "NOME DA TABLESPACE",t.total "TOTAL(MB)", NVL(f.livre,0) "LIVRE(MB)", (NVL(f.livre,0)*100/t.total) "LIVRE(%)"
+FROM dba_data_files d,
+(SELECT tablespace_name ,sum(bytes)/1024/1024 total FROM dba_data_files GROUP BY tablespace_name) t,
+(SELECT tablespace_name ,sum(bytes)/1024/1024 livre FROM dba_free_space GROUP BY tablespace_name) f
+WHERE d.tablespace_name =t.tablespace_name
+AND d.tablespace_name = f.tablespace_name(+)
+--AND (NVL(f.livre,0)*100/t.total) <= 20
+--AND d.tablespace_name ='VBI_INDEX'
+ORDER BY 4 DESC; 
+
+===========detalha apenas a tabela=====================
+set pages 200
+set lines 200
+COL tbs FORMAT a25
+COL total(mb) FORMAT 999,999,990.00
+COL livre(mb) FORMAT 999,999,990.00
+COL livre(%) FORMAT 990.00
+SELECT DISTINCT d.tablespace_name "NOME DA TABLESPACE",t.total "TOTAL(MB)", NVL(f.livre,0) "LIVRE(MB)", (NVL(f.livre,0)*100/t.total) "LIVRE(%)"
+FROM dba_data_files d,
+(SELECT tablespace_name ,sum(bytes)/1024/1024 total FROM dba_data_files GROUP BY tablespace_name) t,
+(SELECT tablespace_name ,sum(bytes)/1024/1024 livre FROM dba_free_space GROUP BY tablespace_name) f
+WHERE d.tablespace_name =t.tablespace_name
+AND d.tablespace_name = f.tablespace_name(+)
+--AND (NVL(f.livre,0)*100/t.total) <= 20
+AND d.tablespace_name = 'LEGADOS_DATA'
+ORDER BY 4 DESC;
+
+
+--> Verifica tablespace de acordo com o nome
+
+COL tablespace_name FORMAT a20
+COL file_name FORMAT a50
+COL size_mb FORMAT 999,990.00
+COL maxsize_mb FORMAT 999,990.00
+COL autoextensible FORMAT a5
+set pages 200
+Set lines 200
+select df.tablespace_name, df.file_name, df.bytes/1024/1024 size_mb, df.status, df.autoextensible, df.maxbytes/1024/1024 maxsize_mb, df.increment_by
+from dba_data_files df 
+where
+df.tablespace_name='&tablespace_name';
+
+--> Após identificado a tabela e o diretório onde ela se encontra, deve se verificar o espaço no disco onde se encontra a tablespace.
+utilizando o comando df -h
+
+--> Feito o acesso ao diretório, valide  o local onde são salvos os datafiles e mande o comando ls -ltr para listar os arquivos e o usuário que 
+possui permissão de modificação naquele diretório
+
+--> Acesse o diretório com o usuário que possui permissão de modificar os files
+
+--> Crie uma nova pasta para adicionar o novo datafile, obedecendo os padrões de nomeclatura observados no diretório do cliente
+Utiliza os comandos a seguir:
+
+mkdir nomedapasta
+ls -ltr  		para ver se ela foi criada
+cd nomedapasta		para verificar acesso
+
+--> Crie o arquivo, fazendo as alterações onde necessário conforme padrões do cliente
+
+alter tablespace UNDO01 add datafile '/ora06/oradata/ORAESP/undo02.dbf' size 5g autoextend on next 200m maxsize 10g;
+
+alter tablespace FOUNDATION_DATA add datafile size 5g; (criando datafile que não é ASM sem dizer nome)
+
+
+nomeclatura para tamanho -> mb - m  	gb - g		Ex: 8g
+
+--> Agora é só verificar se deu certo
+
+
+
+
+
+0-0-0-0-0-0 TABLESPACE FULL PARA ASM
+
+--->Segue processo até onde é necessário verificar espaço no ASM para adicionar datafile, deve-se proceder assim:
+PARA SABER SE TEM ASM, GERALMENTE POSSUI USUÁRIO GRID NO BANCO
+
+-> Visto isso o comando deve ficar proximo do seguinte, este ira mostrar o espaço total e disponivel para adicionar o datafile
+
+SELECT NAME,
+TOTAL_MB,
+CASE WHEN (USABLE_FILE_MB <= 0) THEN 0 ELSE USABLE_FILE_MB END AS FREE_MB,
+TRUNC(100 - (CASE WHEN (USABLE_FILE_MB <= 0) THEN 0 ELSE USABLE_FILE_MB END / TOTAL_MB/DECODE(TYPE, 'NORMAL', 2, 'HIGH', 3, 'EXTERN', 1)) * 100, 2) USED
+FROM    V$ASM_DISKGROUP; 
+
+-> Visto que os datafiles se encontravam da seguinte forma
+PSAPSR3              +DATA/erp/datafile/psapsr3.352.896883469              5,120.00 AVAILABLE YES      8,192.00        65536
+PSAPSR3              +DATA/erp/datafile/psapsr3.353.897301045              2,048.00 AVAILABLE YES      8,192.00        65536
+
+-> Rode o seguinte comando no banco, obedecendo os espaços e especificações de acordo com o banco do cliente
+Ex:
+alter tablespace UNDOTBS1 add datafile '+DATA' size 1g autoextend on next 300m maxsize g;
+
+Tablespace altered.
+
+-> Feito isso, acompanhar o processo.
+
+
+AUMENTAR/DIMINUIR TAMANHO
+
+alter database datafile 'FileName' resize 8g;
+
+Ex: 
+alter database datafile '/u01/oradata/ORCL/datafile/tsaudit0006.dbf' resize 15g;
+
+REMOVER/ADICIONAR AUTOEXTEND
+
+alter database datafile 'DataFileName' autoextend off;
+
+alter database datafile 'DataFileName' autoextend on next 500m maxsize 30g;
+
+
+alter database datafile '+DATA/dv24/datafile/msafix.555.950670629' resize 15g;
+
+
+alter tablespace CPD_DATA add datafile '+DATA_3PAR' size 5g ;
+
+
+
+alter tablespace APPS_TS_TX_DATA add datafile '+DATA' size 1g autoextend on next 300m maxsize 10g;
+
+
+
+=======================================================================================================
+
+OBs: na tupy existem servidores com a configuração de criar tablespace com nome automático sem ele possuir ASM
+
+segue exemplo de como criar a tablespace nova caso precise.
+
+show parameter create
+
+> alter tablespace PSAPSR3 add datafile size 5g autoextend on next 300m maxsize 10g;
+
+para ver as configurações de criação de datafile 
+> show parameter create;

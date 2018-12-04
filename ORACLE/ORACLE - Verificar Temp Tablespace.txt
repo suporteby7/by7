@@ -1,0 +1,18 @@
+Tablespace TEMP
+
+--> Para validar o que está consumindo de mais no tablespace
+sh ss.sh toptemp
+
+--> Para ver o SID/PID do processo que está mais consumindo na tabela
+sh ss.sh versid 
+
+--> Para ver as sessões ativas
+SQL> @sessoesc
+
+--> Ver o SQL das sessões que deseja
+SQL> @sessoes.sql
+
+--> Para ver mais detalhes a respeito da sessão/processo que está consumindo mais da tabela
+SQL> @info
+Enter value for sid:
+

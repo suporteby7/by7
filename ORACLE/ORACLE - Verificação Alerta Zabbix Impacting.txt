@@ -1,0 +1,25 @@
+ORACLE - Verificação Alerta Zabbix Impacting
+
+
+*Coletar no moniotramento qual a consulta que está com tempo elevado.
+
+SQL> select SQL_FULLTEXT from v$sql where sql_id='gb7sq5mnnrsup';
+
+Adicionar o resultado ao chamado e executar o procedimento abaixo para flush na query.
+
+
+SQL> select ADDRESS, HASH_VALUE from V$SQLAREA where SQL_ID = 'gb7sq5mnnrsup';
+
+ADDRESS          HASH_VALUE
+---------------- ----------
+0000001E5CCE9DC0 3914064725
+
+SQL> exec DBMS_SHARED_POOL.PURGE ('0000001E5CCE9DC0, 3914064725', 'C');
+
+PL/SQL procedure successfully completed.
+
+SQL> select ADDRESS, HASH_VALUE from V$SQLAREA where SQL_ID = 'gb7sq5mnnrsup';
+
+no rows selected
+
+SQL>

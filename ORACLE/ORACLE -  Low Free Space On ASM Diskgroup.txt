@@ -1,0 +1,59 @@
+ORACLE - Low Free Space On ASM Diskgroup.txt
+
+verificar no banco o disckgroup alertado:
+
+SELECT NAME,
+TOTAL_MB,
+CASE WHEN (USABLE_FILE_MB <= 0) THEN 0 ELSE USABLE_FILE_MB END AS FREE_MB,
+TRUNC(100 - (CASE WHEN (USABLE_FILE_MB <= 0) THEN 0 ELSE USABLE_FILE_MB END / TOTAL_MB/DECODE(TYPE, 'NORMAL', 2, 'HIGH', 3, 'EXTERN', 1)) * 100, 2) USED
+FROM    V$ASM_DISKGROUP; 
+
+após sair do banco e acessar o user do ASM.
+>su - oragrid
+
+Executar o seguinte comando para acessar o ASM
+> asmcmd -p
+
+após acessa o Diskgroup
+
+Ex: cd DATA_HML
+
+Executa um ls para verificar quais bases usam este diskgroup
+
+Ex: ls
+
+após valida qual user é do banco.
+
+> ps -ef | grep pmon
+
+acessar o user do banco e após acessa o sqlplus
+
+> su - oratxt
+> sqlplus / as sysdba
+
+Executar o seguinte script (pode levar alguns min de resposta):
+
+column cmd format a120 word_wrapped
+set lines 400 
+set pages 5000
+spool resize.sql
+select a.tablespace_name,
+'alter database datafile '''||file_name||''' resize ' ||
+       ceil( (nvl(hwm,1)*8192)/1024/1024 )  || 'm;' cmd
+from dba_data_files a,
+     ( select file_id, max(block_id+blocks-1) hwm
+         from dba_extents
+        group by file_id ) b
+where a.file_id = b.file_id(+)
+  and ceil( blocks*8192/1024/1024) -
+      ceil( (nvl(hwm,1)*8192)/1024/1024 ) > 0
+	 -- and a.tablespace_name='PSAPSR3';
+	 order by 1;
+spool off 
+
+O retorno do script ja irá informar os resizes possiveis, pode se executar todos menos o de tabespace UNDO.
+
+Ex: alter database datafile '+DATA_HML/PRDOTM/DATAFILE/fricd.272.973095673' resize 332m;
+
+com isso irá liberar espaço no diskgroup, validar novamente espaço livre do diskgroup.
+

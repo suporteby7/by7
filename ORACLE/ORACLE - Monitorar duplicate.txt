@@ -1,0 +1,68 @@
+ORACLE - Monitorar duplicate
+
+consulta o temp com o comando  ps -ef | grep rman o log fica no campo msglog=
+
+================================== MODO DISCO=============================================
+while true; 
+clear; 
+do date; 
+
+ARQUIVO=/opt/seven/duplicate/tmp/arqlog_DuplicateDisk_1119.tmp;
+
+TOTAL="$(grep -wc newname ${ARQUIVO})";
+RESTAURADOS="$(grep -wc "restoring datafile" ${ARQUIVO} )";
+declare -i RESTANTES;
+declare -i PORCENTAGEM;
+declare -i CONCLUIDO;
+RESTANTES=$TOTAL-$RESTAURADOS;
+PORCENTAGEM=($RESTANTES*100)/$TOTAL;
+CONCLUIDO=100-$PORCENTAGEM;
+
+echo -ne "Total: "; 
+cat ${ARQUIVO} | grep "set newname for " | wc -l ; 
+echo -ne "Atual: "; 
+cat ${ARQUIVO} | grep "restoring datafile" | wc -l;
+echo -ne "Restantes: "; 
+echo " $PORCENTAGEM%"; 
+echo -ne "Concluido: "; 
+echo " $CONCLUIDO%"; 
+echo ;
+echo "Últimos registros: ${ARQUIVO}";
+echo ;
+tail -30 ${ARQUIVO};
+sleep 10; 
+done
+
+
+=============================== MODO ATIVO ================================================
+
+while true; 
+clear; 
+do date; 
+
+ARQUIVO=/opt/seven/duplicate/tmp/arqlog_DuplicateActive_26071.tmp;
+
+TOTAL="$(grep -wc newname ${ARQUIVO})";
+RESTAURADOS="$(grep -wc "output file name" ${ARQUIVO} )";
+declare -i RESTANTES;
+declare -i PORCENTAGEM;
+declare -i CONCLUIDO;
+RESTANTES=$TOTAL-$RESTAURADOS;
+PORCENTAGEM=($RESTANTES*100)/$TOTAL;
+CONCLUIDO=100-$PORCENTAGEM;
+
+echo -ne "Total: "; 
+cat ${ARQUIVO} | grep "set newname for " | wc -l ; 
+echo -ne "Atual: "; 
+cat ${ARQUIVO} | grep "output file name" | wc -l;
+echo -ne "Restantes: "; 
+echo " $PORCENTAGEM%"; 
+echo -ne "Concluido: "; 
+echo " $CONCLUIDO%"; 
+echo ;
+echo "Últimos registros: ${ARQUIVO}";
+echo ;
+tail -20 ${ARQUIVO};
+sleep 10; 
+done
+==========================================================================================

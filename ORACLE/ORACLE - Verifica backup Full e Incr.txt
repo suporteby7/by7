@@ -1,0 +1,61 @@
+set pages 200
+ set lines 200
+ col START_TIME for a20
+ col END_TIME for a20
+ col OUTPUT_BYTES_DISPLAY for a15
+ col TIME_TAKEN_DISPLAY for a20
+ select session_key,
+       input_type,
+       status,
+       to_char(start_time,'yyyy-mm-dd hh24:mi') start_time,
+       to_char(end_time,'yyyy-mm-dd hh24:mi')   end_time,
+       output_bytes_display,
+       time_taken_display,
+       output_device_type
+from v$rman_backup_job_details 
+where end_time > sysdate -1
+and input_type like 'DB FULL' 
+or input_type like 'DB INCR'
+or input_type like 'ARCHIVELOG'
+order by session_key asc;
+
+===========================================================================================
+
+
+set pages 200
+ set lines 200
+ col START_TIME for a20
+ col END_TIME for a20
+ col OUTPUT_BYTES_DISPLAY for a15
+ col TIME_TAKEN_DISPLAY for a20
+ select session_key,
+       input_type,
+       status,
+       to_char(start_time,'yyyy-mm-dd hh24:mi') start_time,
+       to_char(end_time,'yyyy-mm-dd hh24:mi')   end_time,
+       output_bytes_display,
+       time_taken_display
+from v$rman_backup_job_details where start_time > sysdate -1
+order by session_key asc;  
+
+============================================================================================
+
+
+
+=========================================================================================
+
+Confere o erro pelo log do backup 
+
+ 
+set lines 500
+set pages 1000
+col output for a800
+select output
+from GV$RMAN_OUTPUT
+where session_recid = &RECID
+order by recid;
+
+
+erros no log conhecidos.
+(-17) falta de midia ou falta na midia corrente
+(-2) não possui midia."mount request"

@@ -1,0 +1,10 @@
+ORACLE - Verifica rotinas no banco (backup, export etc)
+
+listar 
+crontab -l 
+
+editar 
+crontab -e
+
+para salvar quando edita a contrab usar o comando esc+wq!+enter
+

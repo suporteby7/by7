@@ -1,0 +1,53 @@
+
+Pontos a Validar:
+
+=====================================================================================================================================================
+1) Validar se o banco esta no ar via sqlplus.
+
+    sqlplus / as sysdba
+
+   select status from v$instance;  -- Deve retornar Status = OPEN
+
+ OBS: Se for diferente de Open Acionar N2 Imediatamente para validar pois o Banco não esta no Ar.
+
+=====================================================================================================================================================
+2) Caso o Banco estiver Open validar o Status do Listener  e evidenciar . Deve estar Ready para instancia especificada. Caso não estiver Acionar N2 para validar
+
+ lsnrctl status -- 
+
+Service "TST" has 1 instance(s).
+  Instance "TST", status READY, has 1 handler(s) for this service...
+
+
+=====================================================================================================================================================
+3) Testar a Conectividade via um aplicativo
+
+  a) Identificiar o ORACLE_SID 
+
+      echo $ORACLE_SID
+
+  b) Testar o comando tnsping 
+
+      tnsping  $ORACLE_SID
+
+Attempting to contact (DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = oradb2.by7.local)(PORT = 1521)) (CONNECT_DATA = (SERVER = DEDICATED) (SERVICE_NAME = zabbix)(UR=A)))
+OK (0 msec)
+ Caso não responder evidenciar e Escalonar N2
+
+   c) sqlplus zabbix\zabbixmon@<ORACLE_SID>
+
+ Caso não conectar evidenciar e Escalonar N2
+
+=====================================================================================================================================================
+4) Avaliar a existencia de erros no alert do Banco de dados.
+
+sqlplus " / as sysdba" 
+
+SQL> show parameter user_dump_dest              
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+user_dump_dest                       string      /u01/app/oracle/diag/rdbms/zabbix/zabbix/trace
+
+tail -100f   /u01/app/oracle/diag/rdbms/zabbix/zabbix/trace/alert*.log 
+

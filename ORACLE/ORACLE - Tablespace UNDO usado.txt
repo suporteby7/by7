@@ -1,0 +1,51 @@
+set pages 200
+set lines 200
+COL tbs FORMAT a25
+COL total(mb) FORMAT 9,999,990.00
+COL livre(mb) FORMAT 999,990.00
+COL livre(%) FORMAT 990.00
+SELECT DISTINCT d.tablespace_name "NOME DA TABLESPACE",t.total "TOTAL(MB)", NVL(f.livre,0) "LIVRE(MB)", (NVL(f.livre,0)*100/t.total) "LIVRE(%)"
+FROM dba_data_files d,
+(SELECT tablespace_name ,sum(bytes)/1024/1024 total FROM dba_data_files GROUP BY tablespace_name) t,
+(SELECT tablespace_name ,sum(bytes)/1024/1024 livre FROM dba_free_space GROUP BY tablespace_name) f
+WHERE d.tablespace_name =t.tablespace_name
+AND d.tablespace_name = f.tablespace_name(+)
+-- AND t.tablespace_name = 'SARDO_DATA'
+-- AND t.tablespace_name = 'PSAPSR3'
+-- AND t.tablespace_name = 'APPS_TS_TX_DATA'
+-- AND t.tablespace_name = 'PSAPSR3'
+AND t.tablespace_name like 'UNDO%'
+-- AND (NVL(f.livre,0)*100/t.total) <= 11
+-- AND (NVL(f.livre,0)*100/t.total) >= 90
+ORDER BY 4 DESC;
+
+
+========================================================================================================
+
+
+SELECT  TABLESPACE_NAME,
+		DUE.MBYTES AS CURRENTMBYTES,
+        DTF.MAXMBYTES,
+		CAST((100/DTF.MAXMBYTES * DUE.MBYTES) AS NUMERIC(5,2)) AS PERCUSED
+FROM 		DBA_TABLESPACES DTS
+INNER JOIN 	(SELECT	TABLESPACE_NAME, SUM(CASE
+											WHEN (AUTOEXTENSIBLE = 'YES') THEN
+												TRUNC(MAXBYTES/1024/1024)
+											ELSE
+												TRUNC(BYTES/1024/1024)
+										END) AS MAXMBYTES
+			FROM	DBA_DATA_FILES
+			GROUP BY TABLESPACE_NAME) DTF
+USING 		(TABLESPACE_NAME)
+INNER JOIN	(SELECT DTSA.TABLESPACE_NAME, 
+					TRUNC(SUM(NVL(DUEA.BYTES, 0))/1024/1024) AS MBYTES 
+			FROM 		DBA_TABLESPACES DTSA
+			LEFT JOIN 	DBA_UNDO_EXTENTS DUEA
+			ON			DTSA.TABLESPACE_NAME = DUEA.TABLESPACE_NAME
+			AND			((DUEA.STATUS = 'ACTIVE') OR (DUEA.STATUS = 'UNEXPIRED' AND DTSA.RETENTION = 'GUARANTEE'))
+			WHERE 		DTSA.CONTENTS	=	'UNDO'
+			AND			DTSA.STATUS		=	'ONLINE'
+			GROUP BY DTSA.TABLESPACE_NAME) DUE
+USING		(TABLESPACE_NAME)
+WHERE 		DTS.CONTENTS	=	'UNDO'
+AND			DTS.STATUS		=	'ONLINE';

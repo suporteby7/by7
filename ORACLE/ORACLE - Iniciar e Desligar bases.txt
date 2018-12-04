@@ -1,0 +1,11 @@
+ORACLE - iniciar e desligar bases.txt
+
+
+su - oracle
+exportar o SID
+export ORACLE_SID=dbprod
+e conectar
+sqlplus / as sysdba
+executar o comando
+shutdown immediate;
+e esperar
