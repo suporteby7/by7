@@ -1,0 +1,127 @@
+Tablespace TEMP
+
+--> Para validar o que está consumindo de mais no tablespace
+ss.sh toptemp
+
+--> Para ver o SID/PID do processo que está mais consumindo na tabela
+ss.sh versid 
+
+--> Para ver as sessões ativas
+SQL> @sessoesc
+
+--> Ver o SQL das sessões que deseja
+SQL> @sessoes.sql
+
+--> Para ver mais detalhes a respeito da sessão/processo que está consumindo mais da tabela
+SQL> @info
+Enter value for sid:
+
+-->Listar consumo das tablespaces temp do banco
+SELECT	A.TABLESPACE_NAME,
+		SUM(A.BYTES_USED)/1024/1024 USED_MB, 
+		SUM(B.BYTES)/1024/1024 TOTAL_MB,
+		CAST(SUM(A.BYTES_USED)/SUM(B.BYTES) * 100.0 AS NUMERIC(18,2)) PCT_USED
+FROM 	V$TEMP_EXTENT_POOL A, 
+		V$TEMPFILE B
+WHERE 	A.FILE_ID(+)	=	B.FILE#
+GROUP BY	A.TABLESPACE_NAME
+ORDER BY	PCT_USED DESC;
+
+
+
+-->Lista tempdb existentes no banco
+
+set pages 200
+set lines 200
+COL tbs FORMAT a25
+COL total(mb) FORMAT 999,990.00
+COL livre(mb) FORMAT 999,990.00
+COL livre(%) FORMAT 990.00
+SELECT DISTINCT d.tablespace_name "NOME DA TABLESPACE",t.total "TOTAL(MB)", NVL(f.livre,0) "LIVRE(MB)", (NVL(f.livre,0)*100/t.total) "LIVRE(%)"
+FROM dba_temp_files d,
+(SELECT tablespace_name ,sum(bytes)/1024/1024 total FROM dba_temp_files GROUP BY tablespace_name) t,
+(SELECT tablespace_name ,sum(bytes)/1024/1024 livre FROM dba_free_space GROUP BY tablespace_name) f
+WHERE d.tablespace_name =t.tablespace_name
+AND d.tablespace_name = f.tablespace_name(+)
+--AND (NVL(f.livre,0)*100/t.total) <= 20
+AND d.tablespace_name='TEMP'
+ORDER BY 4 DESC;
+
+-->Listar tempfiles de acordo com o nome
+
+COL tablespace_name FORMAT a20
+COL file_name FORMAT a50
+COL size_mb FORMAT 999,990.00
+COL maxsize_mb FORMAT 999,990.00
+COL autoextensible FORMAT a5
+set pages 200
+Set lines 200
+select df.tablespace_name, df.file_name, df.bytes/1024/1024 size_mb, df.status, df.autoextensible, df.maxbytes/1024/1024 maxsize_mb, df.increment_by
+from dba_temp_files df 
+where 
+df.tablespace_name='TEMP';
+
+--Adicionar tempfile
+alter tablespace TEMP_FC add tempfile '/fc/datafiles/temp_FC_4.dbf' size 10g autoextend on next 100m maxsize 15g;
+
+--Efetuar resize tempffile
+alter database tempfile '+DATA/sip/tempfile/temp.275.959142247' resize 1g;
+
+--REMOVER/ADICIONAR AUTOEXTEND
+alter database tempfile '/oradata/TENVXI/oradata/TENVXI/datafile/data_D-PENVXI_TS-APPS_UNDO01_FNO-102' autoextend off;
+
+alter database tempfile '/vol1/oradata/prosyst/temp02.dbf' autoextend on next 100m maxsize 5g;
+
+-->Verificar sessões com maior consumo de temp
+
+SET LINES 200;
+SET PAGES 999;
+COL TABLESPACE FORM A10;
+COL USERNAME FORM A15;
+COL OSUSER FORM A15;
+COL PROGRAM FORM A30;
+COL MODULE FOR a20;
+COL MACHINE FOR a30;
+COL SID_SERIAL_INST FOR a15;
+SELECT	B.TABLESPACE, 
+		ROUND(((SUM( B.BLOCKS * P.VALUE) ) / 1024 / 1024 ), 2 ) SIZE_MB, 
+		TO_CHAR(A.SID) || ',' || TO_CHAR(A.SERIAL#) || ',@' || TO_CHAR(A.INST_ID) SID_SERIAL_INST,
+		A.USERNAME, 
+		A.OSUSER, 
+		A.PROGRAM,
+		A.MODULE,
+		A.MACHINE,
+		A.STATUS, 
+		NVL(A.SQL_ID, PREV_SQL_ID) AS SQL_ID
+FROM 	GV$SESSION A, 
+		GV$SORT_USAGE B, 
+		GV$PROCESS C, 
+		GV$PARAMETER P
+WHERE 	P.NAME 		= 	'db_block_size'
+AND 	A.SADDR 	= 	B.SESSION_ADDR
+AND 	A.PADDR 	= 	C.ADDR
+AND     B.BLOCKS     >= 2000
+GROUP BY	B.TABLESPACE, 
+			TO_CHAR(A.SID) || ',' || TO_CHAR(A.SERIAL#) || ',@' || TO_CHAR(A.INST_ID),
+			A.USERNAME, 
+			A.OSUSER, 
+			A.PROGRAM,
+			A.MODULE,
+			A.MACHINE,
+			A.STATUS, 
+			NVL(A.SQL_ID, PREV_SQL_ID)
+ORDER BY	1,	
+			2;
+
+--retorna qual sessão, usuário está usando um arquivo especifico de temp.
+--Ideal para quando é necessário dropar algum tempfile e está em uso.
+
+select 
+su.INST_ID, su.username, se.sid, se.SERIAL#, tf.FILE#, tf.NAME, tf.STATUS
+from gv$sort_usage su
+, v$tempfile tf
+, GV$SESSION se
+where su.SEGRFNO# = tf.FILE#
+and se.INST_ID = su.INST_ID
+and se.SADDR = su.SESSION_ADDR
+order by tf.file#;
