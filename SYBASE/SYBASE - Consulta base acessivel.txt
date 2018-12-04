@@ -1,0 +1,22 @@
+SYBASE - Consulta base acessivel milium 
+
+
+ps -ef | grep dataserver
+
+-acessar como root 
+
+sudo su - 
+
+consulta o user da base 
+
+- acessa como user da base
+
+su - sybeq2
+
+history | grep isql
+
+- ver ultimo comando para acessar a base 
+
+isql -Usapsa -P#mil2013 -X -SEQ2 -w7000
+
+se base estiver acessivel não gerará nenhum erro e aparecerá o segunte :  >1 
