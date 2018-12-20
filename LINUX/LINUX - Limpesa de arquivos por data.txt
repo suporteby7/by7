@@ -17,6 +17,3 @@ find . -name "*.trm*" -mmin +5 -exec rm -rf {}  \;
 consultar numero de arquivos na pasta
 
 ls -la|grep -e "^-"|wc -l
-
-
-
