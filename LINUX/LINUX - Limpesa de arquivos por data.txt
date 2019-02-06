@@ -1,7 +1,7 @@
 pasta traces
 
-find . -name "*.trc" -mtime +7 -exec rm -rf {} \;
-find . -name "*.trm" -mtime +7 -exec rm -rf {} \;
+find . -name "*.trc" -mtime +3 -exec rm -rf {} \;
+find . -name "*.trm" -mtime +3 -exec rm -rf {} \;
 
 pasta adump (somente 7 dias sempre, somente pastas adump e adit pode ser executado este comando)
 
